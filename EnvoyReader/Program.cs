@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace EnvoyReader
 {
@@ -29,7 +30,7 @@ namespace EnvoyReader
             return appSettings;
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine(DateTime.Now);
 
@@ -42,7 +43,7 @@ namespace EnvoyReader
 
             try
             {
-                Retry.Do(() =>
+                await Retry.Do(async() =>
                 {
                     var payload = new LineProtocolPayload();
 
@@ -51,7 +52,7 @@ namespace EnvoyReader
 
                     var client = new LineProtocolClient(new Uri(appSettings.InfluxUrl), appSettings.InfluxDb);
 
-                    var writeResult = client.WriteAsync(payload).Result;
+                    var writeResult = await client.WriteAsync(payload);
                     if (writeResult.Success)
                         Console.WriteLine("Written successfully");
                     else
