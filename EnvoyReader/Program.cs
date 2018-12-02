@@ -67,8 +67,16 @@ namespace EnvoyReader
         private static async Task WriteToPVOutput(AppSettings appSettings, List<Inverter> inverters, SystemProduction systemProduction)
         {
             var pvOutput = new Output.PVOutput(appSettings);
-            await pvOutput.WriteAsync(systemProduction, inverters);
-            Console.WriteLine($"Successfully written to {pvOutput.GetType().Name}");
+
+            if (systemProduction.ReadingTime > 0)
+            {
+                await pvOutput.WriteAsync(systemProduction, inverters);
+                Console.WriteLine($"Successfully written to {pvOutput.GetType().Name}");
+            }
+            else
+            {
+                Console.WriteLine($"No need to write to {pvOutput.GetType().Name}");
+            }
         }
 
         private static async Task WriteToInfluxDB(AppSettings appSettings, List<Inverter> inverters, SystemProduction systemProduction)

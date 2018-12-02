@@ -23,12 +23,12 @@ namespace EnvoyReader.Output
         {
             var payload = new LineProtocolPayload();
 
-            if (systemProduction != null && systemProduction.ReadingTime > 0)
+            if (systemProduction.ReadingTime > 0)
             {
                 AddSystemProductionToPayload(systemProduction, payload);
             }
 
-            if (inverters != null && inverters.Count > 0)
+            if (inverters.Count > 0)
             {
                 AddInvertersToPayload(inverters, payload);
             }
