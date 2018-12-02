@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 
-namespace Envoy
+namespace EnvoyReader.Envoy
 {
     public class EnvoyDataProvider
     {
@@ -31,7 +31,7 @@ namespace Envoy
             }
         }
 
-        public SystemProduction GetSystemProduction()
+        public List<SystemProduction> GetSystemProduction()
         {
             using (var webClient = new WebClient())
             {
@@ -40,9 +40,9 @@ namespace Envoy
 
                 var jsonData = webClient.DownloadString($"{baseUrl}/production.json");
 
-                var production = JsonConvert.DeserializeObject<SystemProduction>(jsonData);
+                var list = JsonConvert.DeserializeObject<SystemProductionList>(jsonData);
 
-                return production;
+                return list.Production;
             }
         }
     }

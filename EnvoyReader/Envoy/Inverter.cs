@@ -1,4 +1,4 @@
-﻿namespace Envoy
+﻿namespace EnvoyReader.Envoy
 {
     public class Inverter
     {

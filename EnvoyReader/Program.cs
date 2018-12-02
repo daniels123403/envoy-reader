@@ -1,5 +1,5 @@
-﻿using Envoy;
-using EnvoyReader.Config;
+﻿using EnvoyReader.Config;
+using EnvoyReader.Envoy;
 using EnvoyReader.Utilities;
 using InfluxDB.LineProtocol.Client;
 using InfluxDB.LineProtocol.Payload;
@@ -36,8 +36,9 @@ namespace EnvoyReader
 
             var appSettings = ReadAppConfiguration();
 
-            Console.WriteLine($"Use envoy: {appSettings.EnvoyBaseUrl} as {appSettings.EnvoyUsername}");
-            Console.WriteLine($"Use influx: {appSettings.InfluxDb} @ {appSettings.InfluxUrl}");
+            Console.WriteLine($"Use Envoy: {appSettings.EnvoyBaseUrl} as {appSettings.EnvoyUsername}");
+            Console.WriteLine($"Use InfluxDB: {appSettings.InfluxDb} @ {appSettings.InfluxUrl}");
+            Console.WriteLine($"Use PVOutput: {appSettings.PVOutputSystemId}");
 
             var envoyDataProvider = new EnvoyDataProvider(appSettings.EnvoyUsername, appSettings.EnvoyPassword, appSettings.EnvoyBaseUrl);
 
@@ -45,18 +46,16 @@ namespace EnvoyReader
             {
                 await Retry.Do(async() =>
                 {
-                    var payload = new LineProtocolPayload();
+                    var inverters = ReadInverterProduction(envoyDataProvider);
+                    var systemProduction = ReadSystemProduction(envoyDataProvider);
 
-                    ReadInverterProduction(envoyDataProvider, payload);
-                    ReadSystemProduction(envoyDataProvider, payload);
+                    var influxdb = new Output.InfluxDB(appSettings);
+                    await influxdb.WriteAsync(systemProduction, inverters);
+                    Console.WriteLine($"Successfully written to {influxdb.GetType().Name}");
 
-                    var client = new LineProtocolClient(new Uri(appSettings.InfluxUrl), appSettings.InfluxDb);
-
-                    var writeResult = await client.WriteAsync(payload);
-                    if (writeResult.Success)
-                        Console.WriteLine("Written successfully");
-                    else
-                        throw new Exception(writeResult.ErrorMessage);
+                    var pvOutput = new Output.PVOutput(appSettings);
+                    await pvOutput.WriteAsync(systemProduction, inverters);
+                    Console.WriteLine($"Successfully written to {pvOutput.GetType().Name}");
                 }, TimeSpan.FromSeconds(1), 50);
             }
             catch (Exception ex)
@@ -69,12 +68,12 @@ namespace EnvoyReader
 #endif
         }
 
-        private static void ReadSystemProduction(EnvoyDataProvider envoyDataProvider, LineProtocolPayload payload)
+        private static SystemProduction ReadSystemProduction(EnvoyDataProvider envoyDataProvider)
         {
             Console.WriteLine("Read system producton");
 
             var production = envoyDataProvider.GetSystemProduction();
-            var inverters = production.Production.FirstOrDefault(p => p.Type == "inverters");
+            var inverters = production.FirstOrDefault(p => p.Type == "inverters");
 
             if (inverters == null)
                 throw new Exception("No system data found");
@@ -87,26 +86,10 @@ namespace EnvoyReader
             Console.WriteLine($"  WhLifeTime: {inverters.WhLifeTime}");
             Console.WriteLine($"  WNow: {inverters.WNow}");
 
-            var systemPoint = new LineProtocolPoint(
-                "inverters", //Measurement
-                new Dictionary<string, object> //Fields
-                {
-                    { $"activecount", inverters.ActiveCount },
-                    { $"whlifetime", inverters.WhLifeTime },
-                    { $"WNow", inverters.WNow },
-                },
-                new Dictionary<string, string> //Tags
-                    {
-                },
-                readingTime.UtcDateTime); //Timestamp
-
-            if (inverters.ReadingTime > 0)
-                payload.Add(systemPoint);
-            else
-                Console.WriteLine("Invalid reading time, skip adding to payload");
+            return inverters;
         }
 
-        private static void ReadInverterProduction(EnvoyDataProvider envoyDataProvider, LineProtocolPayload payload)
+        private static List<Inverter> ReadInverterProduction(EnvoyDataProvider envoyDataProvider)
         {
             Console.WriteLine("Read inverter producton");
 
@@ -120,25 +103,12 @@ namespace EnvoyReader
                     var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.LastReportDate);
 
                     Console.WriteLine($"{inverter.SerialNumber}\t{reportTime.ToLocalTime()}\t{inverter.LastReportWatts}");
-
-                    var inverterPoint = new LineProtocolPoint(
-                        "inverter", //Measurement
-                        new Dictionary<string, object> //Fields
-                        {
-                            { $"lastreportwatts", inverter.LastReportWatts },
-                            { $"maxreportwatts", inverter.MaxReportWatts },
-                        },
-                        new Dictionary<string, string> //Tags
-                        {
-                            { $"serialnumber", inverter.SerialNumber },
-                        },
-                        reportTime.UtcDateTime); //Timestamp
-
-                    payload.Add(inverterPoint);
                 }
             }
 
             Console.WriteLine($"Total watts: {inverters.Sum(i => i.LastReportWatts)}");
+
+            return inverters;
         }
     }
 }

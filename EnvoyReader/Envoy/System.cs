@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace Envoy
+namespace EnvoyReader.Envoy
 {
-    public class Production
+    public class SystemProduction
     {
         public string Type { get; set; }
         public int ActiveCount { get; set; }
@@ -11,8 +11,8 @@ namespace Envoy
         public int WhLifeTime { get; set; }
     }
 
-    public class SystemProduction
+    public class SystemProductionList
     {
-        public List<Production> Production { get; set; }
+        public List<SystemProduction> Production { get; set; }
     }
 }
