@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net;
-using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace EnvoyReader.Envoy
@@ -19,14 +19,21 @@ namespace EnvoyReader.Envoy
             this.baseUrl = baseUrl;
         }
 
+        private HttpClient CreateHttpClient()
+        {
+            var credentials = new NetworkCredential(username, password);
+            var handler = new HttpClientHandler { Credentials = credentials };
+
+            var httpClient = new HttpClient(handler, true);
+
+            return httpClient;
+        }
+
         public async Task<List<Inverter>> GetInverterProduction()
         {
-            using (var webClient = new WebClient())
+            using (var httpClient = CreateHttpClient())
             {
-                webClient.Credentials = new NetworkCredential(username, password);
-                webClient.Encoding = Encoding.UTF8;
-
-                var jsonData = await webClient.DownloadStringTaskAsync($"{baseUrl}/api/v1/production/inverters");
+                var jsonData = await httpClient.GetStringAsync($"{baseUrl}/api/v1/production/inverters");
 
                 return JsonConvert.DeserializeObject<List<Inverter>>(jsonData);
             }
@@ -34,12 +41,9 @@ namespace EnvoyReader.Envoy
 
         public async Task<List<SystemProduction>> GetSystemProduction()
         {
-            using (var webClient = new WebClient())
+            using (var httpClient = CreateHttpClient())
             {
-                webClient.Credentials = new NetworkCredential(username, password);
-                webClient.Encoding = Encoding.UTF8;
-
-                var jsonData = await webClient.DownloadStringTaskAsync($"{baseUrl}/production.json");
+                var jsonData = await httpClient.GetStringAsync($"{baseUrl}/production.json");
 
                 var list = JsonConvert.DeserializeObject<SystemProductionList>(jsonData);
 
