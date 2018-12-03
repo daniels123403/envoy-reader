@@ -1,5 +1,6 @@
 ﻿using EnvoyReader.Config;
 using EnvoyReader.Envoy;
+using EnvoyReader.Output;
 using EnvoyReader.Utilities;
 using InfluxDB.LineProtocol.Client;
 using InfluxDB.LineProtocol.Payload;
@@ -42,16 +43,16 @@ namespace EnvoyReader
 
             try
             {
-                await Retry.Do(async() =>
+                await Retry.Do(async () =>
                 {
                     var envoyDataProvider = new EnvoyDataProvider(appSettings.EnvoyUsername, appSettings.EnvoyPassword, appSettings.EnvoyBaseUrl);
 
-                    var inverters = await ReadInverterProduction(envoyDataProvider);
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
+                    var inverters = await ReadInverterProduction(envoyDataProvider);
 
                     await Task.WhenAll(
-                        WriteToInfluxDB(appSettings, inverters, systemProduction),
-                        WriteToPVOutput(appSettings, inverters, systemProduction));
+                        WriteToOutput(inverters, systemProduction, new PVOutput(appSettings)),
+                        WriteToOutput(inverters, systemProduction, new Output.InfluxDB(appSettings)));
                 }, TimeSpan.FromSeconds(1), 50);
             }
             catch (Exception ex)
@@ -64,26 +65,20 @@ namespace EnvoyReader
 #endif
         }
 
-        private static async Task WriteToPVOutput(AppSettings appSettings, List<Inverter> inverters, SystemProduction systemProduction)
+        private static async Task WriteToOutput(List<Inverter> inverters, SystemProduction systemProduction, IOutput output)
         {
-            var pvOutput = new Output.PVOutput(appSettings);
+            var name = output.GetType().Name;
+            var result = await output.WriteAsync(systemProduction, inverters);
 
-            if (systemProduction.ReadingTime > 0)
+            switch (result)
             {
-                await pvOutput.WriteAsync(systemProduction, inverters);
-                Console.WriteLine($"Successfully written to {pvOutput.GetType().Name}");
+                case Output.WriteResult.NoNeedToWrite:
+                    Console.WriteLine($"No need to write to {name}");
+                    break;
+                case Output.WriteResult.Success:
+                    Console.WriteLine($"Successfully written to {name}");
+                    break;
             }
-            else
-            {
-                Console.WriteLine($"No need to write to {pvOutput.GetType().Name}");
-            }
-        }
-
-        private static async Task WriteToInfluxDB(AppSettings appSettings, List<Inverter> inverters, SystemProduction systemProduction)
-        {
-            var influxdb = new Output.InfluxDB(appSettings);
-            await influxdb.WriteAsync(systemProduction, inverters);
-            Console.WriteLine($"Successfully written to {influxdb.GetType().Name}");
         }
 
         private static async Task<SystemProduction> ReadSystemProduction(EnvoyDataProvider envoyDataProvider)

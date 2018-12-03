@@ -4,8 +4,10 @@ using EnvoyReader.Envoy;
 
 namespace EnvoyReader.Output
 {
+    public enum WriteResult { Success, NoNeedToWrite }
+
     interface IOutput
     {
-        Task WriteAsync(SystemProduction systemProduction, List<Inverter> inverters);
+        Task<WriteResult> WriteAsync(SystemProduction systemProduction, List<Inverter> inverters);
     }
 }

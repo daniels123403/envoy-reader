@@ -19,7 +19,7 @@ namespace EnvoyReader.Output
             database = appSettings.InfluxDb;
         }
 
-        public async Task WriteAsync(SystemProduction systemProduction, List<Inverter> inverters)
+        public async Task<WriteResult> WriteAsync(SystemProduction systemProduction, List<Inverter> inverters)
         {
             var payload = new LineProtocolPayload();
 
@@ -39,6 +39,8 @@ namespace EnvoyReader.Output
 
             if (!writeResult.Success)
                 throw new Exception(writeResult.ErrorMessage);
+
+            return WriteResult.Success;
         }
 
         private void AddSystemProductionToPayload(SystemProduction systemProduction, LineProtocolPayload payload)

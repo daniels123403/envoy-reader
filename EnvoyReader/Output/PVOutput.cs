@@ -20,32 +20,41 @@ namespace EnvoyReader.Output
             systemId = appSettings.PVOutputSystemId;
         }
 
-        public async Task WriteAsync(SystemProduction systemProduction, List<Inverter> inverters)
+        public async Task<WriteResult> WriteAsync(SystemProduction systemProduction, List<Inverter> inverters)
         {
-            var readingTime = DateTimeOffset.FromUnixTimeSeconds(systemProduction.ReadingTime);
+            if (systemProduction.ReadingTime <= 0)
+            {
+                return WriteResult.NoNeedToWrite;
+            }
 
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Add("X-Pvoutput-Apikey", apiKey);
                 client.DefaultRequestHeaders.Add("X-Pvoutput-SystemId", systemId);
 
+                var readingTime = DateTimeOffset.FromUnixTimeSeconds(systemProduction.ReadingTime);
+                var localTIme = readingTime.ToLocalTime();
+
                 var postData = new FormUrlEncodedContent(new[]
                 {
-                    new KeyValuePair<string, string>("d", readingTime.ToLocalTime().ToString("yyyyMMdd")),
-                    new KeyValuePair<string, string>("t", readingTime.ToLocalTime().ToString("HH:mm")),
+                    new KeyValuePair<string, string>("d", localTIme.ToString("yyyyMMdd")),
+                    new KeyValuePair<string, string>("t", localTIme.ToString("HH:mm")),
                     new KeyValuePair<string, string>("v1", systemProduction.WhLifeTime.ToString(CultureInfo.InvariantCulture)), //Energy Generation
                     new KeyValuePair<string, string>("v2", systemProduction.WNow.ToString(CultureInfo.InvariantCulture)), //Power Generation
                     new KeyValuePair<string, string>("c1", "1"), //Cumulative
                 });
 
-                var response = await client.PostAsync(AddStatusUrl, postData);
-
-                if (!response.IsSuccessStatusCode)
+                using (var response = await client.PostAsync(AddStatusUrl, postData))
                 {
-                    var responseData = await response.Content.ReadAsStringAsync();
-                    throw new Exception(responseData);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var responseData = await response.Content.ReadAsStringAsync();
+                        throw new Exception(responseData);
+                    }
                 }
             }
+
+            return WriteResult.Success;
         }
     }
 }
