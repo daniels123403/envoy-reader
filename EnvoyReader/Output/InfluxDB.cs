@@ -4,14 +4,15 @@ using InfluxDB.LineProtocol.Client;
 using InfluxDB.LineProtocol.Payload;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EnvoyReader.Output
 {
     class InfluxDB : IOutput
     {
-        private Uri url;
-        private string database;
+        private readonly Uri url;
+        private readonly string database;
 
         public InfluxDB(AppSettings appSettings)
         {
@@ -23,15 +24,11 @@ namespace EnvoyReader.Output
         {
             var payload = new LineProtocolPayload();
 
-            if (systemProduction.ReadingTime > 0)
-            {
-                AddSystemProductionToPayload(systemProduction, payload);
-            }
+            var systemPayloadAdded = AddSystemProductionToPayload(systemProduction, payload);
+            var invertersPayloadAdded = AddInvertersToPayload(inverters, payload);
 
-            if (inverters.Count > 0)
-            {
-                AddInvertersToPayload(inverters, payload);
-            }
+            if (!systemPayloadAdded && !invertersPayloadAdded)
+                return WriteResult.NoNeedToWrite;
 
             var client = new LineProtocolClient(url, database);
 
@@ -43,8 +40,11 @@ namespace EnvoyReader.Output
             return WriteResult.Success;
         }
 
-        private void AddSystemProductionToPayload(SystemProduction systemProduction, LineProtocolPayload payload)
+        private bool AddSystemProductionToPayload(SystemProduction systemProduction, LineProtocolPayload payload)
         {
+            if (systemProduction.ReadingTime <= 0)
+                return false;
+
             var readingTime = DateTimeOffset.FromUnixTimeSeconds(systemProduction.ReadingTime);
 
             var systemPoint = new LineProtocolPoint(
@@ -61,32 +61,36 @@ namespace EnvoyReader.Output
                 readingTime.UtcDateTime); //Timestamp
 
             payload.Add(systemPoint);
+
+            return true;
         }
 
-        private void AddInvertersToPayload(List<Inverter> inverters, LineProtocolPayload payload)
+        private bool AddInvertersToPayload(List<Inverter> inverters, LineProtocolPayload payload)
         {
-            foreach (var inverter in inverters)
+            var added = false;
+
+            foreach (var inverter in inverters.Where(i => i.LastReportDate > 0))
             {
-                if (inverter.LastReportDate > 0)
-                {
-                    var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.LastReportDate);
+                var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.LastReportDate);
 
-                    var inverterPoint = new LineProtocolPoint(
-                        "inverter", //Measurement
-                        new Dictionary<string, object> //Fields
-                        {
-                            { $"lastreportwatts", inverter.LastReportWatts },
-                            { $"maxreportwatts", inverter.MaxReportWatts },
-                        },
-                        new Dictionary<string, string> //Tags
-                        {
-                            { $"serialnumber", inverter.SerialNumber },
-                        },
-                        reportTime.UtcDateTime); //Timestamp
+                var inverterPoint = new LineProtocolPoint(
+                    "inverter", //Measurement
+                    new Dictionary<string, object> //Fields
+                    {
+                        { $"lastreportwatts", inverter.LastReportWatts },
+                        { $"maxreportwatts", inverter.MaxReportWatts },
+                    },
+                    new Dictionary<string, string> //Tags
+                    {
+                        { $"serialnumber", inverter.SerialNumber },
+                    },
+                    reportTime.UtcDateTime); //Timestamp
 
-                    payload.Add(inverterPoint);
-                }
+                payload.Add(inverterPoint);
+                added = true;
             }
+
+            return added;
         }
     }
 }

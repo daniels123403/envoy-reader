@@ -11,8 +11,8 @@ namespace EnvoyReader.Output
     class PVOutput : IOutput
     {
         private const string AddStatusUrl = "http://pvoutput.org/service/r2/addstatus.jsp";
-        private string apiKey;
-        private string systemId;
+        private readonly string apiKey;
+        private readonly string systemId;
 
         public PVOutput(AppSettings appSettings)
         {

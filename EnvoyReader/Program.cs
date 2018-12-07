@@ -72,10 +72,10 @@ namespace EnvoyReader
 
             switch (result)
             {
-                case Output.WriteResult.NoNeedToWrite:
+                case WriteResult.NoNeedToWrite:
                     Console.WriteLine($"No need to write to {name}");
                     break;
-                case Output.WriteResult.Success:
+                case WriteResult.Success:
                     Console.WriteLine($"Successfully written to {name}");
                     break;
             }
@@ -89,7 +89,7 @@ namespace EnvoyReader
             var inverters = production.FirstOrDefault(p => p.Type == "inverters");
 
             if (inverters == null)
-                throw new Exception("No system data found");
+                throw new Exception("No inverter data found");
 
             var readingTime = DateTimeOffset.FromUnixTimeSeconds(inverters.ReadingTime);
 
@@ -107,7 +107,7 @@ namespace EnvoyReader
             Console.WriteLine("Read inverter producton");
 
             var inverters = await envoyDataProvider.GetInverterProduction();
-            Console.WriteLine("S/N\t\tReportTime\t\t\tWatts");
+            Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts");
 
             foreach (var inverter in inverters)
             {
@@ -115,11 +115,11 @@ namespace EnvoyReader
                 {
                     var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.LastReportDate);
 
-                    Console.WriteLine($"{inverter.SerialNumber}\t{reportTime.ToLocalTime()}\t{inverter.LastReportWatts}");
+                    Console.WriteLine($"  {inverter.SerialNumber}\t{reportTime.ToLocalTime()}\t{inverter.LastReportWatts}");
                 }
             }
 
-            Console.WriteLine($"Total watts: {inverters.Sum(i => i.LastReportWatts)}");
+            Console.WriteLine($"  Total watts: {inverters.Sum(i => i.LastReportWatts)}");
 
             return inverters;
         }

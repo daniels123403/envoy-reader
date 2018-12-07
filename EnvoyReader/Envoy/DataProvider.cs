@@ -24,7 +24,7 @@ namespace EnvoyReader.Envoy
             var credentials = new NetworkCredential(username, password);
             var handler = new HttpClientHandler { Credentials = credentials };
 
-            var httpClient = new HttpClient(handler, true);
+            var httpClient = new HttpClient(handler, disposeHandler: true);
 
             return httpClient;
         }
