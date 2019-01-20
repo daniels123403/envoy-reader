@@ -1,6 +1,6 @@
 ﻿namespace EnvoyReader.Config
 {
-    class AppSettings
+    class AppSettings : IAppSettings
     {
         public string InfluxUrl { get; set; }
         public string InfluxDb { get; set; }

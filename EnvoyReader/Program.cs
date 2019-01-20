@@ -16,7 +16,7 @@ namespace EnvoyReader
 {
     class Program
     {
-        private static AppSettings ReadAppConfiguration()
+        private static IAppSettings ReadAppConfiguration()
         {
             var startupPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
@@ -53,7 +53,7 @@ namespace EnvoyReader
                     await Task.WhenAll(
                         WriteToOutput(inverters, systemProduction, new PVOutput(appSettings)),
                         WriteToOutput(inverters, systemProduction, new Output.InfluxDB(appSettings)));
-                }, TimeSpan.FromSeconds(1), 50);
+                }, retryInterval: TimeSpan.FromSeconds(1), maxAttemptCount: 50);
             }
             catch (Exception ex)
             {
@@ -86,6 +86,10 @@ namespace EnvoyReader
             Console.WriteLine("Read system producton");
 
             var production = await envoyDataProvider.GetSystemProduction();
+
+            if (production == null)
+                throw new Exception("No production data found");
+
             var inverters = production.FirstOrDefault(p => p.Type == "inverters");
 
             if (inverters == null)
@@ -107,6 +111,10 @@ namespace EnvoyReader
             Console.WriteLine("Read inverter producton");
 
             var inverters = await envoyDataProvider.GetInverterProduction();
+
+            if (inverters == null)
+                throw new Exception("No inverter data found");
+
             Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts");
 
             foreach (var inverter in inverters)

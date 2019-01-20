@@ -14,7 +14,7 @@ namespace EnvoyReader.Output
         private readonly string apiKey;
         private readonly string systemId;
 
-        public PVOutput(AppSettings appSettings)
+        public PVOutput(IAppSettings appSettings)
         {
             apiKey = appSettings.PVOutputApiKey;
             systemId = appSettings.PVOutputSystemId;

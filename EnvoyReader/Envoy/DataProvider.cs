@@ -47,7 +47,7 @@ namespace EnvoyReader.Envoy
 
                 var list = JsonConvert.DeserializeObject<SystemProductionList>(jsonData);
 
-                return list.Production;
+                return list?.Production;
             }
         }
     }

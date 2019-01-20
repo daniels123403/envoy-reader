@@ -14,7 +14,7 @@ namespace EnvoyReader.Output
         private readonly Uri url;
         private readonly string database;
 
-        public InfluxDB(AppSettings appSettings)
+        public InfluxDB(IAppSettings appSettings)
         {
             url = new Uri(appSettings.InfluxUrl);
             database = appSettings.InfluxDb;
