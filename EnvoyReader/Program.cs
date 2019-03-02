@@ -50,9 +50,18 @@ namespace EnvoyReader
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
                     var inverters = await ReadInverterProduction(envoyDataProvider);
 
-                    await Task.WhenAll(
-                        WriteToOutput(inverters, systemProduction, new PVOutput(appSettings)),
-                        WriteToOutput(inverters, systemProduction, new Output.InfluxDB(appSettings)));
+                    var outputs = new List<IOutput>(3)
+                    {
+                        new PVOutput(appSettings),
+                        new Output.InfluxDB(appSettings)
+                    };
+
+                    if (!string.IsNullOrEmpty(appSettings.OutputDataToFile))
+                    {
+                        outputs.Add(new FileOutput(appSettings));
+                    }
+
+                    await Task.WhenAll(outputs.Select(o => WriteToOutput(inverters, systemProduction, o)));
                 }, retryInterval: TimeSpan.FromSeconds(1), maxAttemptCount: 50);
             }
             catch (Exception ex)
@@ -68,6 +77,8 @@ namespace EnvoyReader
         private static async Task WriteToOutput(List<Inverter> inverters, SystemProduction systemProduction, IOutput output)
         {
             var name = output.GetType().Name;
+            Console.WriteLine($"Try to write to {name}");
+
             var result = await output.WriteAsync(systemProduction, inverters);
 
             switch (result)

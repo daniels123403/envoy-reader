@@ -11,5 +11,7 @@
 
         public string PVOutputApiKey { get; set; }
         public string PVOutputSystemId { get; set; }
+
+        public string OutputDataToFile { get; set; }
     }
 }

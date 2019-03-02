@@ -9,5 +9,6 @@
         string InfluxUrl { get; set; }
         string PVOutputApiKey { get; set; }
         string PVOutputSystemId { get; set; }
+        string OutputDataToFile { get; set; }
     }
 }
