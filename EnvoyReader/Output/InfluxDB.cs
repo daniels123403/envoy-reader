@@ -13,11 +13,15 @@ namespace EnvoyReader.Output
     {
         private readonly Uri url;
         private readonly string database;
+        private readonly ILogger logger;
 
-        public InfluxDB(IAppSettings appSettings)
+        public InfluxDB(IAppSettings appSettings, ILogger logger)
         {
             url = new Uri(appSettings.InfluxUrl);
             database = appSettings.InfluxDb;
+            this.logger = logger;
+
+            logger.WriteLine($"Use InfluxDB: {database} @ {url}");
         }
 
         public async Task<WriteResult> WriteAsync(SystemProduction systemProduction, List<Inverter> inverters)

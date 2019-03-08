@@ -14,13 +14,17 @@ namespace EnvoyReader.Output
         private const string AddStatusUrl = "http://pvoutput.org/service/r2/addstatus.jsp";
         private readonly string apiKey;
         private readonly string systemId;
+        private readonly ILogger logger;
         private IWeatherProvider weatherProvider;
 
-        public PVOutput(IAppSettings appSettings, IWeatherProvider weatherProvider)
+        public PVOutput(IAppSettings appSettings, ILogger logger, IWeatherProvider weatherProvider)
         {
             apiKey = appSettings.PVOutputApiKey;
             systemId = appSettings.PVOutputSystemId;
+            this.logger = logger;
             this.weatherProvider = weatherProvider;
+
+            logger.WriteLine($"Use PVOutput: {systemId}");
         }
 
         public async Task<WriteResult> WriteAsync(SystemProduction systemProduction, List<Inverter> inverters)
@@ -36,6 +40,8 @@ namespace EnvoyReader.Output
                 client.DefaultRequestHeaders.Add("X-Pvoutput-SystemId", systemId);
 
                 var currentTemperature = await weatherProvider.GetCurrentTemperature();
+
+                logger.WriteLine($"Current temperature: {currentTemperature}");
 
                 var readingTime = DateTimeOffset.FromUnixTimeSeconds(systemProduction.ReadingTime);
                 var localTIme = readingTime.ToLocalTime();

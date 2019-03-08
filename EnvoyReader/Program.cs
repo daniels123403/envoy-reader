@@ -35,10 +35,9 @@ namespace EnvoyReader
             Console.WriteLine(DateTimeOffset.Now);
 
             var appSettings = ReadAppConfiguration();
+            var logger = new ConsoleLogger();
 
             Console.WriteLine($"Use Envoy: {appSettings.EnvoyBaseUrl} as {appSettings.EnvoyUsername}");
-            Console.WriteLine($"Use InfluxDB: {appSettings.InfluxDb} @ {appSettings.InfluxUrl}");
-            Console.WriteLine($"Use PVOutput: {appSettings.PVOutputSystemId}");
 
             try
             {
@@ -52,13 +51,13 @@ namespace EnvoyReader
 
                     var outputs = new List<IOutput>(3)
                     {
-                        new PVOutput(appSettings, weatherProvider),
-                        new Output.InfluxDB(appSettings)
+                        new PVOutput(appSettings, logger, weatherProvider),
+                        new Output.InfluxDB(appSettings, logger)
                     };
 
                     if (!string.IsNullOrEmpty(appSettings.OutputDataToFile))
                     {
-                        outputs.Add(new FileOutput(appSettings));
+                        outputs.Add(new FileOutput(appSettings, logger));
                     }
 
                     await Task.WhenAll(outputs.Select(o => WriteToOutput(inverters, systemProduction, o)));

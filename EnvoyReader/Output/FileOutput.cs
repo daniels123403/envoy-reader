@@ -11,11 +11,15 @@ namespace EnvoyReader.Output
     class FileOutput : IOutput
     {
         private string file;
+        private readonly ILogger logger;
 
-        public FileOutput(IAppSettings appSettings)
+        public FileOutput(IAppSettings appSettings, ILogger logger)
         {
             file = appSettings.OutputDataToFile;
             file = file.Replace("{date}", DateTime.Now.ToString("yyyyMMdd"));
+            this.logger = logger;
+
+            logger.WriteLine($"Use FileOutput: {file}");
         }
 
         public async Task<WriteResult> WriteAsync(SystemProduction systemProduction, List<Inverter> inverters)
