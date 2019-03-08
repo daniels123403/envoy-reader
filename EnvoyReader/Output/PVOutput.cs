@@ -39,27 +39,12 @@ namespace EnvoyReader.Output
                 client.DefaultRequestHeaders.Add("X-Pvoutput-Apikey", apiKey);
                 client.DefaultRequestHeaders.Add("X-Pvoutput-SystemId", systemId);
 
-                var readingTime = DateTimeOffset.FromUnixTimeSeconds(systemProduction.ReadingTime);
-                var localTime = readingTime.ToLocalTime();
+                var parameters = new List<KeyValuePair<string, string>>();
 
-                var parameters = new List<KeyValuePair<string, string>>()
-                {
-                    new KeyValuePair<string, string>("d", localTime.ToString("yyyyMMdd")),
-                    new KeyValuePair<string, string>("t", localTime.ToString("HH:mm")),
-                    new KeyValuePair<string, string>("v1", systemProduction.WhLifeTime.ToString(CultureInfo.InvariantCulture)), //Energy Generation
-                    new KeyValuePair<string, string>("v2", systemProduction.WNow.ToString(CultureInfo.InvariantCulture)), //Power Generation
-                    new KeyValuePair<string, string>("c1", "1"), //Cumulative
-                };
+                AddFixedParameters(systemProduction, parameters);
+                await AddWeatherParameters(parameters);
 
-                if (weatherProvider != null)
-                {
-                    var currentTemperature = await weatherProvider.GetCurrentTemperatureAsync();
-                    logger.WriteLine($"Current temperature: {currentTemperature}");
-                    parameters.Add(new KeyValuePair<string, string>("v5", currentTemperature.ToString(CultureInfo.InvariantCulture))); //Temperature (celcius)
-                }
-
-                var postData = new FormUrlEncodedContent(parameters);
-                using (var response = await client.PostAsync(AddStatusUrl, postData))
+                using (var response = await client.PostAsync(AddStatusUrl, new FormUrlEncodedContent(parameters)))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -70,6 +55,37 @@ namespace EnvoyReader.Output
             }
 
             return WriteResult.Success;
+        }
+
+        private async Task AddWeatherParameters(List<KeyValuePair<string, string>> parameters)
+        {
+            if (weatherProvider != null)
+            {
+                try
+                {
+                    var currentTemperature = await weatherProvider.GetCurrentTemperatureAsync();
+                    logger.WriteLine($"Current temperature: {currentTemperature}");
+                    parameters.Add(new KeyValuePair<string, string>("v5", currentTemperature.ToString(CultureInfo.InvariantCulture))); //Temperature (celcius)
+                }
+                catch (Exception e)
+                {
+                    logger.WriteLine($"Could not get current temperature: {e}");
+                }
+            }
+        }
+
+        private static void AddFixedParameters(SystemProduction systemProduction, List<KeyValuePair<string, string>> parameters)
+        {
+            var readingTime = DateTimeOffset.FromUnixTimeSeconds(systemProduction.ReadingTime);
+            var localTime = readingTime.ToLocalTime();
+            parameters.AddRange(new[]
+            {
+                new KeyValuePair<string, string>("d", localTime.ToString("yyyyMMdd")),
+                new KeyValuePair<string, string>("t", localTime.ToString("HH:mm")),
+                new KeyValuePair<string, string>("v1", systemProduction.WhLifeTime.ToString(CultureInfo.InvariantCulture)), //Energy Generation
+                new KeyValuePair<string, string>("v2", systemProduction.WNow.ToString(CultureInfo.InvariantCulture)), //Power Generation
+                new KeyValuePair<string, string>("c1", "1"), //Cumulative
+            });
         }
     }
 }
