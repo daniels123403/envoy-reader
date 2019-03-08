@@ -2,8 +2,7 @@
 using EnvoyReader.Envoy;
 using EnvoyReader.Output;
 using EnvoyReader.Utilities;
-using InfluxDB.LineProtocol.Client;
-using InfluxDB.LineProtocol.Payload;
+using EnvoyReader.Weather;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -33,7 +32,7 @@ namespace EnvoyReader
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine(DateTime.Now);
+            Console.WriteLine(DateTimeOffset.Now);
 
             var appSettings = ReadAppConfiguration();
 
@@ -46,13 +45,14 @@ namespace EnvoyReader
                 await Retry.Do(async () =>
                 {
                     var envoyDataProvider = new EnvoyDataProvider(appSettings.EnvoyUsername, appSettings.EnvoyPassword, appSettings.EnvoyBaseUrl);
+                    var weatherProvider = new Buienradar();
 
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
                     var inverters = await ReadInverterProduction(envoyDataProvider);
 
                     var outputs = new List<IOutput>(3)
                     {
-                        new PVOutput(appSettings),
+                        new PVOutput(appSettings, weatherProvider),
                         new Output.InfluxDB(appSettings)
                     };
 
