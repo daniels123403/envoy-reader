@@ -37,7 +37,7 @@ namespace EnvoyReader.Weather
             }
         }
 
-        public async Task<double> GetCurrentTemperature()
+        public async Task<double> GetCurrentTemperatureAsync()
         {
             if (currentTemperature == null)
             {

@@ -44,7 +44,7 @@ namespace EnvoyReader
                 await Retry.Do(async () =>
                 {
                     var envoyDataProvider = new EnvoyDataProvider(appSettings.EnvoyUsername, appSettings.EnvoyPassword, appSettings.EnvoyBaseUrl);
-                    var weatherProvider = new Buienradar();
+                    var weatherProvider = new OpenWeatherMap(appSettings);
 
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
                     var inverters = await ReadInverterProduction(envoyDataProvider);

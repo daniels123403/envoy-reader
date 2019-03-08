@@ -7,6 +7,6 @@ namespace EnvoyReader.Weather
 {
     interface IWeatherProvider
     {
-        Task<double> GetCurrentTemperature();
+        Task<double> GetCurrentTemperatureAsync();
     }
 }

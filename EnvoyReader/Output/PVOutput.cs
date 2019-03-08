@@ -39,23 +39,26 @@ namespace EnvoyReader.Output
                 client.DefaultRequestHeaders.Add("X-Pvoutput-Apikey", apiKey);
                 client.DefaultRequestHeaders.Add("X-Pvoutput-SystemId", systemId);
 
-                var currentTemperature = await weatherProvider.GetCurrentTemperature();
-
-                logger.WriteLine($"Current temperature: {currentTemperature}");
-
                 var readingTime = DateTimeOffset.FromUnixTimeSeconds(systemProduction.ReadingTime);
-                var localTIme = readingTime.ToLocalTime();
+                var localTime = readingTime.ToLocalTime();
 
-                var postData = new FormUrlEncodedContent(new[]
+                var parameters = new List<KeyValuePair<string, string>>()
                 {
-                    new KeyValuePair<string, string>("d", localTIme.ToString("yyyyMMdd")),
-                    new KeyValuePair<string, string>("t", localTIme.ToString("HH:mm")),
+                    new KeyValuePair<string, string>("d", localTime.ToString("yyyyMMdd")),
+                    new KeyValuePair<string, string>("t", localTime.ToString("HH:mm")),
                     new KeyValuePair<string, string>("v1", systemProduction.WhLifeTime.ToString(CultureInfo.InvariantCulture)), //Energy Generation
                     new KeyValuePair<string, string>("v2", systemProduction.WNow.ToString(CultureInfo.InvariantCulture)), //Power Generation
-                    new KeyValuePair<string, string>("v5", currentTemperature.ToString(CultureInfo.InvariantCulture)), //Temperature (celcius)
                     new KeyValuePair<string, string>("c1", "1"), //Cumulative
-                });
+                };
 
+                if (weatherProvider != null)
+                {
+                    var currentTemperature = await weatherProvider.GetCurrentTemperatureAsync();
+                    logger.WriteLine($"Current temperature: {currentTemperature}");
+                    parameters.Add(new KeyValuePair<string, string>("v5", currentTemperature.ToString(CultureInfo.InvariantCulture))); //Temperature (celcius)
+                }
+
+                var postData = new FormUrlEncodedContent(parameters);
                 using (var response = await client.PostAsync(AddStatusUrl, postData))
                 {
                     if (!response.IsSuccessStatusCode)

@@ -10,5 +10,8 @@
         string PVOutputApiKey { get; set; }
         string PVOutputSystemId { get; set; }
         string OutputDataToFile { get; set; }
+        string OpenWeatherMapApiKey { get; set; }
+        double OpenWeatherMapLat { get; set; }
+        double OpenWeatherMapLon { get; set; }
     }
 }
