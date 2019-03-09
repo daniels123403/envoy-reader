@@ -44,7 +44,7 @@ namespace EnvoyReader
                 await Retry.Do(async () =>
                 {
                     var envoyDataProvider = new EnvoyDataProvider(appSettings.EnvoyUsername, appSettings.EnvoyPassword, appSettings.EnvoyBaseUrl);
-                    var weatherProvider = new OpenWeatherMap(appSettings);
+                    var weatherProvider = GetWeatherProvider(appSettings);
 
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
                     var inverters = await ReadInverterProduction(envoyDataProvider);
@@ -71,6 +71,16 @@ namespace EnvoyReader
 #if DEBUG
             Console.ReadKey();
 #endif
+        }
+
+        private static IWeatherProvider GetWeatherProvider(IAppSettings appSettings)
+        {
+            if (!string.IsNullOrEmpty(appSettings.OpenWeatherMapApiKey))
+            {
+                return new OpenWeatherMap(appSettings);
+            }
+
+            return null;
         }
 
         private static async Task WriteToOutput(List<Inverter> inverters, SystemProduction systemProduction, IOutput output)
