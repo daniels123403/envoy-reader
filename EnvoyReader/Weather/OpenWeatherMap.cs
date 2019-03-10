@@ -1,11 +1,7 @@
-﻿using EnvoyReader.Config;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EnvoyReader.Weather
@@ -16,18 +12,18 @@ namespace EnvoyReader.Weather
         private readonly double lat;
         private readonly double lon;
 
-        public OpenWeatherMap(IAppSettings appSettings)
+        public OpenWeatherMap(string apiKey, double lat, double lon)
         {
-            apiKey = appSettings.OpenWeatherMapApiKey;
-            lat = appSettings.OpenWeatherMapLat;
-            lon = appSettings.OpenWeatherMapLon;
+            this.apiKey = apiKey;
+            this.lat = lat;
+            this.lon = lon;
         }
 
         public async Task<double> GetCurrentTemperatureAsync()
         {
             var latStr = lat.ToString(CultureInfo.InvariantCulture);
             var lonStr = lon.ToString(CultureInfo.InvariantCulture);
-            var url = $"http://api.openweathermap.org/data/2.5/weather?lat={latStr}&lon={lonStr}&mode=json&units=metric&APPID={apiKey}";
+            var url = new Uri($"http://api.openweathermap.org/data/2.5/weather?lat={latStr}&lon={lonStr}&mode=json&units=metric&APPID={apiKey}");
 
             using (var client = new HttpClient())
             using (var response = await client.GetAsync(url))
@@ -36,11 +32,11 @@ namespace EnvoyReader.Weather
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"Could not fetch weather: {response.ReasonPhrase} ({response.StatusCode})");
+                    throw new Exception($"Could not fetch OpenWeatherMap data: {response.ReasonPhrase}");
                 }
 
                 var weather = JObject.Parse(responseData);
-                var temperature = double.Parse(weather["main"]["temp"].Value<string>(), CultureInfo.InvariantCulture);
+                var temperature = double.Parse((string)weather["main"]["temp"], CultureInfo.InvariantCulture);
 
                 return temperature;
             }

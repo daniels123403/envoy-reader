@@ -11,10 +11,9 @@ namespace EnvoyReader.Weather
 {
     class Buienradar : IWeatherProvider
     {
-        private double? currentTemperature;
         private const string Url = "https://data.buienradar.nl/2.0/feed/json";
 
-        private async Task<double> FetchCurrentTemperature()
+        public async Task<double> GetCurrentTemperatureAsync()
         {
             using (var client = new HttpClient())
             using (var response = await client.GetAsync(Url))
@@ -23,28 +22,18 @@ namespace EnvoyReader.Weather
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"Could not fetch weather: {response.ReasonPhrase} ({response.StatusCode})");
+                    throw new Exception($"Could not fetch Buienradar data: {response.ReasonPhrase}");
                 }
 
                 var weather = JObject.Parse(responseData);
                 var station = weather["actual"]["stationmeasurements"].Values<JObject>()
-                    .Where(m => m["stationid"].Value<int>() == 6260)
-                    .FirstOrDefault();
+                    .Where(m => (int)m["stationid"] == 6260)
+                    .First();
 
-                var temperature = double.Parse(station["temperature"].Value<string>(), CultureInfo.InvariantCulture);
+                var temperature = double.Parse((string)station["temperature"], CultureInfo.InvariantCulture);
 
                 return temperature;
             }
-        }
-
-        public async Task<double> GetCurrentTemperatureAsync()
-        {
-            if (currentTemperature == null)
-            {
-                currentTemperature = await FetchCurrentTemperature();
-            }
-
-            return currentTemperature.Value;
         }
     }
 }
