@@ -11,7 +11,14 @@ namespace EnvoyReader.Weather
 {
     class Buienradar : IWeatherProvider
     {
+        private readonly int stationId;
         private const string Url = "https://data.buienradar.nl/2.0/feed/json";
+
+
+        public Buienradar(int stationId)
+        {
+            this.stationId = stationId;
+        }
 
         public async Task<double> GetCurrentTemperatureAsync()
         {
@@ -27,8 +34,13 @@ namespace EnvoyReader.Weather
 
                 var weather = JObject.Parse(responseData);
                 var station = weather["actual"]["stationmeasurements"].Values<JObject>()
-                    .Where(m => (int)m["stationid"] == 6260)
-                    .First();
+                    .Where(m => (int)m["stationid"] == stationId)
+                    .FirstOrDefault();
+
+                if (station == null)
+                {
+                    throw new Exception($"Station with id {stationId} not found");
+                }
 
                 var temperature = double.Parse((string)station["temperature"], CultureInfo.InvariantCulture);
 

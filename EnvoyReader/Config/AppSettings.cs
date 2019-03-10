@@ -15,7 +15,9 @@
         public string OutputDataToFile { get; set; }
 
         public string OpenWeatherMapApiKey { get; set; }
-        public double OpenWeatherMapLat { get; set; }
-        public double OpenWeatherMapLon { get; set; }
+        public double? OpenWeatherMapLat { get; set; }
+        public double? OpenWeatherMapLon { get; set; }
+
+        public int? BuienradarStationId { get; set; }
     }
 }

@@ -75,11 +75,14 @@ namespace EnvoyReader
 
         private static IWeatherProvider GetWeatherProvider(IAppSettings appSettings)
         {
-            return new Buienradar();
-
-            if (!string.IsNullOrEmpty(appSettings.OpenWeatherMapApiKey))
+            if (!string.IsNullOrEmpty(appSettings.OpenWeatherMapApiKey) && appSettings.OpenWeatherMapLat != null && appSettings.OpenWeatherMapLon != null)
             {
-                return new OpenWeatherMap(appSettings.OpenWeatherMapApiKey, appSettings.OpenWeatherMapLat, appSettings.OpenWeatherMapLon);
+                return new OpenWeatherMap(appSettings.OpenWeatherMapApiKey, appSettings.OpenWeatherMapLat.Value, appSettings.OpenWeatherMapLon.Value);
+            }
+
+            if (appSettings.BuienradarStationId != null)
+            {
+                return new Buienradar(appSettings.BuienradarStationId.Value);
             }
 
             return null;
