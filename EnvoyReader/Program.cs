@@ -67,10 +67,6 @@ namespace EnvoyReader
             {
                 Console.Error.WriteLine(ex.ToString());
             }
-
-#if DEBUG
-            Console.ReadKey();
-#endif
         }
 
         private static IWeatherProvider GetWeatherProvider(IAppSettings appSettings)
