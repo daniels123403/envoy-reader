@@ -32,7 +32,8 @@ namespace EnvoyReader
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine(DateTimeOffset.Now);
+            Console.WriteLine($"Current date/time: {DateTimeOffset.Now}");
+            Console.WriteLine($"Local timezone: {TimeZoneInfo.Local}");
 
             var appSettings = ReadAppConfiguration();
             var logger = new ConsoleLogger();
