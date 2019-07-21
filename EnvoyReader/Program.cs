@@ -50,15 +50,13 @@ namespace EnvoyReader
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
                     var inverters = await ReadInverterProduction(envoyDataProvider);
 
-                    var outputs = new List<IOutput>(3)
-                    {
-                        new PVOutput(appSettings, logger, weatherProvider),
-                        new Output.InfluxDB(appSettings, logger)
-                    };
+                    var outputs = new List<IOutput>();
 
-                    if (!string.IsNullOrEmpty(appSettings.OutputDataToFile))
+                    AddOutputs(appSettings, logger, weatherProvider, outputs);
+
+                    if (outputs.Count == 0)
                     {
-                        outputs.Add(new FileOutput(appSettings, logger));
+                        throw new Exception("No output found to write to");
                     }
 
                     await Task.WhenAll(outputs.Select(o => WriteToOutput(inverters, systemProduction, o)));
@@ -67,6 +65,24 @@ namespace EnvoyReader
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex.ToString());
+            }
+        }
+
+        private static void AddOutputs(IAppSettings appSettings, ConsoleLogger logger, IWeatherProvider weatherProvider, List<IOutput> outputs)
+        {
+            if (!string.IsNullOrEmpty(appSettings.PVOutputApiKey) && !string.IsNullOrEmpty(appSettings.PVOutputSystemId))
+            {
+                outputs.Add(new PVOutput(appSettings, logger, weatherProvider));
+            }
+
+            if (!string.IsNullOrEmpty(appSettings.InfluxDb) && !string.IsNullOrEmpty(appSettings.InfluxUrl))
+            {
+                outputs.Add(new Output.InfluxDB(appSettings, logger));
+            }
+
+            if (!string.IsNullOrEmpty(appSettings.OutputDataToFile))
+            {
+                outputs.Add(new FileOutput(appSettings, logger));
             }
         }
 
