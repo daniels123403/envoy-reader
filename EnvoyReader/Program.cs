@@ -153,7 +153,7 @@ namespace EnvoyReader
             if (inverters == null)
                 throw new Exception("No inverter data found");
 
-            Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts");
+            Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts\tMax watts");
 
             foreach (var inverter in inverters)
             {
@@ -161,7 +161,7 @@ namespace EnvoyReader
                 {
                     var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.LastReportDate);
 
-                    Console.WriteLine($"  {inverter.SerialNumber}\t{reportTime.ToLocalTime()}\t{inverter.LastReportWatts}");
+                    Console.WriteLine($"  {inverter.SerialNumber}\t{reportTime.ToLocalTime()}\t{inverter.LastReportWatts}\t{inverter.MaxReportWatts}");
                 }
             }
 
