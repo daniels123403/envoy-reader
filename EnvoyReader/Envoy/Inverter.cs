@@ -1,11 +1,18 @@
-﻿namespace EnvoyReader.Envoy
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace EnvoyReader.Envoy
 {
     public class Inverter
     {
-        public string SerialNumber { get; set; }
-        public int LastReportDate { get; set; }
-        public int DevType { get; set; }
-        public int LastReportWatts { get; set; }
-        public int MaxReportWatts { get; set; }
+        public InverterProduction Production { get; private set; }
+        public DeviceInfo DeviceInfo { get; private set; }
+
+        public Inverter(InverterProduction production, DeviceInfo deviceInfo)
+        {
+            Production = production;
+            DeviceInfo = deviceInfo;
+        }
     }
 }

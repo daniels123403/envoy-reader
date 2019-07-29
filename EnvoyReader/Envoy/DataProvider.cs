@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -29,13 +30,50 @@ namespace EnvoyReader.Envoy
             return httpClient;
         }
 
-        public async Task<List<Inverter>> GetInverterProduction()
+        public async Task<List<Inverter>> GetInverterInfo()
         {
             using (var httpClient = CreateHttpClient())
             {
-                var jsonData = await httpClient.GetStringAsync($"{baseUrl}/api/v1/production/inverters");
+                var invertersTask = httpClient.GetStringAsync($"{baseUrl}/api/v1/production/inverters");
+                var inventoryTask = httpClient.GetStringAsync($"{baseUrl}/inventory.json");
 
-                return JsonConvert.DeserializeObject<List<Inverter>>(jsonData);
+                var invertersData = await invertersTask;
+                var inventoryData = await inventoryTask;
+
+                var inventory = JsonConvert.DeserializeObject<dynamic>(inventoryData);
+
+                var pcuDevices =
+                    from i in (IEnumerable<dynamic>)inventory
+                    where i.type == "PCU"
+                    select i.devices;
+
+                var inverterDevices =
+                    from device in (IEnumerable<dynamic>)pcuDevices.FirstOrDefault()
+                    select new DeviceInfo()
+                    {
+                        PartNum = device.part_num,
+                        Installed = device.installed,
+                        SerialNum = device.serial_num,
+                        DeviceStatus = device.device_status.ToObject<List<string>>(),
+                        LastReportDate = device.last_rpt_date,
+                        AdminState = device.admin_state,
+                        DevType = device.dev_type,
+                        CreatedDate = device.created_date,
+                        ImageLoadDate = device.img_load_date,
+                        ImagePnumRunning = device.img_pnum_running,
+                        Ptpn = device.ptpn,
+                        ChaneId = device.chaneid,
+                        Producing = device.producing,
+                        Communicating = device.communicating,
+                        Provisioned = device.provisioned,
+                        Operating = device.operating
+                    };
+
+                var inverters = JsonConvert.DeserializeObject<List<InverterProduction>>(invertersData);
+
+                return inverters
+                    .Select(i => new Inverter(i, inverterDevices.FirstOrDefault(d => d.SerialNum == i.SerialNumber)))
+                    .ToList();
             }
         }
 

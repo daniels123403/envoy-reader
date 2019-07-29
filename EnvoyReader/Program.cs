@@ -48,7 +48,7 @@ namespace EnvoyReader
                     var weatherProvider = GetWeatherProvider(appSettings);
 
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
-                    var inverters = await ReadInverterProduction(envoyDataProvider);
+                    var inverters = await ReadInverterInfo(envoyDataProvider);
 
                     var outputs = new List<IOutput>();
 
@@ -144,11 +144,11 @@ namespace EnvoyReader
             return inverters;
         }
 
-        private static async Task<List<Inverter>> ReadInverterProduction(EnvoyDataProvider envoyDataProvider)
+        private static async Task<List<Inverter>> ReadInverterInfo(EnvoyDataProvider envoyDataProvider)
         {
             Console.WriteLine("Read inverter producton");
 
-            var inverters = await envoyDataProvider.GetInverterProduction();
+            var inverters = await envoyDataProvider.GetInverterInfo();
 
             if (inverters == null)
                 throw new Exception("No inverter data found");
@@ -157,15 +157,15 @@ namespace EnvoyReader
 
             foreach (var inverter in inverters)
             {
-                if (inverter.LastReportDate > 0)
+                if (inverter.Production.LastReportDate > 0)
                 {
-                    var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.LastReportDate);
+                    var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.Production.LastReportDate);
 
-                    Console.WriteLine($"  {inverter.SerialNumber}\t{reportTime.ToLocalTime()}\t{inverter.LastReportWatts}\t{inverter.MaxReportWatts}");
+                    Console.WriteLine($"  {inverter.DeviceInfo.SerialNum}\t{reportTime.ToLocalTime()}\t{inverter.Production.LastReportWatts}\t{inverter.Production.MaxReportWatts}");
                 }
             }
 
-            Console.WriteLine($"  Total watts: {inverters.Sum(i => i.LastReportWatts)}");
+            Console.WriteLine($"  Total watts: {inverters.Sum(i => i.Production.LastReportWatts)}");
 
             return inverters;
         }

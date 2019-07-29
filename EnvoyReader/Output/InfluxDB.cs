@@ -73,20 +73,20 @@ namespace EnvoyReader.Output
         {
             var added = false;
 
-            foreach (var inverter in inverters.Where(i => i.LastReportDate > 0))
+            foreach (var inverter in inverters.Where(i => i.Production.LastReportDate > 0))
             {
-                var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.LastReportDate);
+                var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.Production.LastReportDate);
 
                 var inverterPoint = new LineProtocolPoint(
                     "inverter", //Measurement
                     new Dictionary<string, object> //Fields
                     {
-                        { $"lastreportwatts", inverter.LastReportWatts },
-                        { $"maxreportwatts", inverter.MaxReportWatts },
+                        { $"lastreportwatts", inverter.Production.LastReportWatts },
+                        { $"maxreportwatts", inverter.Production.MaxReportWatts },
                     },
                     new Dictionary<string, string> //Tags
                     {
-                        { $"serialnumber", inverter.SerialNumber },
+                        { $"serialnumber", inverter.DeviceInfo.SerialNum },
                     },
                     reportTime.UtcDateTime); //Timestamp
 

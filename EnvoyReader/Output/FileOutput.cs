@@ -36,10 +36,10 @@ namespace EnvoyReader.Output
             foreach (var inverter in inverters)
             {
                 data.Append($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] inverter: ");
-                data.Append($"SerialNumber: {inverter.SerialNumber}, ");
-                data.Append($"LastReportDate: {inverter.LastReportDate}, ");
-                data.Append($"LastReportWatts: {inverter.LastReportWatts}, ");
-                data.Append($"MaxReportWatts: {inverter.MaxReportWatts}");
+                data.Append($"SerialNumber: {inverter.DeviceInfo.SerialNum}, ");
+                data.Append($"LastReportDate: {inverter.Production.LastReportDate}, ");
+                data.Append($"LastReportWatts: {inverter.Production.LastReportWatts}, ");
+                data.Append($"MaxReportWatts: {inverter.Production.MaxReportWatts}");
                 data.AppendLine();
             }
 
