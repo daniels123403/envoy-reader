@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace EnvoyReader
@@ -153,7 +154,7 @@ namespace EnvoyReader
             if (inverters == null)
                 throw new Exception("No inverter data found");
 
-            Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts\tMax watts");
+            Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts\tMax\tProducing");
 
             foreach (var inverter in inverters)
             {
@@ -161,7 +162,16 @@ namespace EnvoyReader
                 {
                     var reportTime = DateTimeOffset.FromUnixTimeSeconds(inverter.Production.LastReportDate);
 
-                    Console.WriteLine($"  {inverter.DeviceInfo.SerialNum}\t{reportTime.ToLocalTime()}\t{inverter.Production.LastReportWatts}\t{inverter.Production.MaxReportWatts}");
+                    var line = new List<string>
+                    {
+                        inverter.DeviceInfo.SerialNum,
+                        Convert.ToString(reportTime.ToLocalTime()),
+                        Convert.ToString(inverter.Production.LastReportWatts),
+                        Convert.ToString(inverter.Production.MaxReportWatts),
+                        Convert.ToString(inverter.DeviceInfo.Producing),
+                    };
+
+                    Console.WriteLine($"  {string.Join("\t", line)}");
                 }
             }
 

@@ -40,15 +40,25 @@ namespace EnvoyReader.Envoy
                 var invertersData = await invertersTask;
                 var inventoryData = await inventoryTask;
 
-                var inventory = JsonConvert.DeserializeObject<dynamic>(inventoryData);
+                var inventory = JsonConvert.DeserializeObject<dynamic>(inventoryData) as IEnumerable<dynamic>;
+
+                if (inventory == null)
+                {
+                    return null;
+                }
 
                 var pcuDevices =
-                    from i in (IEnumerable<dynamic>)inventory
+                    from i in inventory
                     where i.type == "PCU"
-                    select i.devices;
+                    select i.devices as IEnumerable<dynamic>;
+
+                if (pcuDevices == null || pcuDevices.Count() == 0)
+                {
+                    return null;
+                }
 
                 var inverterDevices =
-                    from device in (IEnumerable<dynamic>)pcuDevices.FirstOrDefault()
+                    from device in pcuDevices.FirstOrDefault()
                     select new DeviceInfo()
                     {
                         PartNum = device.part_num,
@@ -70,6 +80,11 @@ namespace EnvoyReader.Envoy
                     };
 
                 var inverters = JsonConvert.DeserializeObject<List<InverterProduction>>(invertersData);
+
+                if (inverters == null)
+                {
+                    return null;
+                }
 
                 return inverters
                     .Select(i => new Inverter(i, inverterDevices.FirstOrDefault(d => d.SerialNum == i.SerialNumber)))
