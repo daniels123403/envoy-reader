@@ -11,12 +11,14 @@ namespace EnvoyReader.Weather
         private readonly string apiKey;
         private readonly double lat;
         private readonly double lon;
+        private readonly ILogger logger;
 
-        public OpenWeatherMap(string apiKey, double lat, double lon)
+        public OpenWeatherMap(string apiKey, double lat, double lon, ILogger logger)
         {
             this.apiKey = apiKey;
             this.lat = lat;
             this.lon = lon;
+            this.logger = logger;
         }
 
         public async Task<double> GetCurrentTemperatureAsync()
@@ -37,6 +39,8 @@ namespace EnvoyReader.Weather
 
                 var weather = JObject.Parse(responseData);
                 var temperature = double.Parse((string)weather["main"]["temp"], CultureInfo.InvariantCulture);
+
+                logger.WriteLine($"Temperature from OpenWeatherMap: {temperature}");
 
                 return temperature;
             }

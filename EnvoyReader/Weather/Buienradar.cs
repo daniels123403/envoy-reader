@@ -13,11 +13,12 @@ namespace EnvoyReader.Weather
     {
         private readonly int stationId;
         private const string Url = "https://data.buienradar.nl/2.0/feed/json";
+        private readonly ILogger logger;
 
-
-        public Buienradar(int stationId)
+        public Buienradar(int stationId, ILogger logger)
         {
             this.stationId = stationId;
+            this.logger = logger;
         }
 
         public async Task<double> GetCurrentTemperatureAsync()
@@ -43,6 +44,8 @@ namespace EnvoyReader.Weather
                 }
 
                 var temperature = double.Parse((string)station["temperature"], CultureInfo.InvariantCulture);
+
+                logger.WriteLine($"Temperature from Buienradar: {temperature}");
 
                 return temperature;
             }

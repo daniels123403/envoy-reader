@@ -46,7 +46,7 @@ namespace EnvoyReader
                 await Retry.Do(async () =>
                 {
                     var envoyDataProvider = new EnvoyDataProvider(appSettings.EnvoyUsername, appSettings.EnvoyPassword, appSettings.EnvoyBaseUrl);
-                    var weatherProvider = GetWeatherProvider(appSettings);
+                    var weatherProvider = GetWeatherProvider(appSettings, logger);
 
                     var systemProduction = await ReadSystemProduction(envoyDataProvider);
                     var inverters = await ReadInverterInfo(envoyDataProvider);
@@ -87,16 +87,16 @@ namespace EnvoyReader
             }
         }
 
-        private static IWeatherProvider GetWeatherProvider(IAppSettings appSettings)
+        private static IWeatherProvider GetWeatherProvider(IAppSettings appSettings, ILogger logger)
         {
             if (!string.IsNullOrEmpty(appSettings.OpenWeatherMapApiKey) && appSettings.OpenWeatherMapLat != null && appSettings.OpenWeatherMapLon != null)
             {
-                return new OpenWeatherMap(appSettings.OpenWeatherMapApiKey, appSettings.OpenWeatherMapLat.Value, appSettings.OpenWeatherMapLon.Value);
+                return new OpenWeatherMap(appSettings.OpenWeatherMapApiKey, appSettings.OpenWeatherMapLat.Value, appSettings.OpenWeatherMapLon.Value, logger);
             }
 
             if (appSettings.BuienradarStationId != null)
             {
-                return new Buienradar(appSettings.BuienradarStationId.Value);
+                return new Buienradar(appSettings.BuienradarStationId.Value, logger);
             }
 
             return null;

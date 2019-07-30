@@ -46,6 +46,7 @@ namespace EnvoyReader.Output
 
                 using (var response = await client.PostAsync(AddStatusUrl, new FormUrlEncodedContent(parameters)))
                 {
+                    logger.WriteLine($"PVOutput response: {response.StatusCode}");
                     if (!response.IsSuccessStatusCode)
                     {
                         var responseData = await response.Content.ReadAsStringAsync();
@@ -64,7 +65,6 @@ namespace EnvoyReader.Output
                 try
                 {
                     var currentTemperature = await weatherProvider.GetCurrentTemperatureAsync();
-                    logger.WriteLine($"Current temperature: {currentTemperature}");
                     parameters.Add(new KeyValuePair<string, string>("v5", currentTemperature.ToString(CultureInfo.InvariantCulture))); //Temperature (celcius)
                 }
                 catch (Exception e)
