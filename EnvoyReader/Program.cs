@@ -154,7 +154,7 @@ namespace EnvoyReader
             if (inverters == null)
                 throw new Exception("No inverter data found");
 
-            Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts\tMax\tProducing");
+            Console.WriteLine("  S/N\t\tReportTime\t\t\tWatts\tMax\tProd\tImage");
 
             foreach (var inverter in inverters)
             {
@@ -164,17 +164,19 @@ namespace EnvoyReader
 
                     var line = new List<string>
                     {
-                        inverter.DeviceInfo.SerialNum,
+                        inverter.Production.SerialNumber,
                         Convert.ToString(reportTime.ToLocalTime()),
                         Convert.ToString(inverter.Production.LastReportWatts),
                         Convert.ToString(inverter.Production.MaxReportWatts),
-                        Convert.ToString(inverter.DeviceInfo.Producing),
+                        Convert.ToString(inverter.DeviceInfo?.Producing),
+                        Convert.ToString(inverter.DeviceInfo?.ImagePnumRunning),
                     };
 
                     Console.WriteLine($"  {string.Join("\t", line)}");
                 }
             }
 
+            Console.WriteLine($"  Count: {inverters.Count}");
             Console.WriteLine($"  Total watts: {inverters.Sum(i => i.Production.LastReportWatts)}");
 
             return inverters;

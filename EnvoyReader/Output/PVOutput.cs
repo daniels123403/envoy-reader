@@ -46,7 +46,6 @@ namespace EnvoyReader.Output
 
                 using (var response = await client.PostAsync(AddStatusUrl, new FormUrlEncodedContent(parameters)))
                 {
-                    logger.WriteLine($"PVOutput response: {response.StatusCode}");
                     if (!response.IsSuccessStatusCode)
                     {
                         var responseData = await response.Content.ReadAsStringAsync();

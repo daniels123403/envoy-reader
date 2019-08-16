@@ -86,7 +86,7 @@ namespace EnvoyReader.Output
                     },
                     new Dictionary<string, string> //Tags
                     {
-                        { $"serialnumber", inverter.DeviceInfo.SerialNum },
+                        { $"serialnumber", inverter.Production.SerialNumber },
                     },
                     reportTime.UtcDateTime); //Timestamp
 
